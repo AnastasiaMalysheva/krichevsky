@@ -1,5 +1,6 @@
 import Krichevsky
 import time
+import predictor
 
 
 def cross_val_split(data, n_splits):
@@ -38,13 +39,15 @@ def mean_absolute_error(y_true, y_pred):
     return tr
 
 
+
 pred = Krichevsky.KrichevskyPredictor()
-res, alpha, asize = pred.load_data('data/fem_birth.txt')
-X, y = cross_val_split(res, 20)
+res, alpha, asize = pred.load_data('data/eur_usd.txt')
+X, y = cross_val_split(res, 100)
 y_pred = []
 stt = time.time()
 for i, x in enumerate(X):
     y_pred.append(pred.fit_predict(x, weights_type='l'))
+y = [pred.mapping[char] for char in y]
 print('TOTAL CALCULATION TIME: ', time.time()-stt, 'Dataset size: ', len(X))
-print("Accuracy on fem: ", accuracy_metrics(y, y_pred))
-print("MAE on fem: ", mean_absolute_error(y, y_pred))
+print("Accuracy on usd: ", accuracy_metrics(y, y_pred))
+print("MAE on usd: ", mean_absolute_error(y, y_pred))

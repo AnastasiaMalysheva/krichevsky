@@ -66,8 +66,8 @@ def calcVxm(t, m, P1, P2):
   return vx, vxa
 
 
-def calcKrichm(t, m, P1, P2, Asize):
-  if m> len(t):
+def calcKrichm(t, m, P1, P2, Asize, vx, vxa):
+  if m > len(t):
     return None
   #	P1inv=pow(P1,P2-2,P2)
   h, P1m = getHash(t[:m], P1, P2)
@@ -75,16 +75,16 @@ def calcKrichm(t, m, P1, P2, Asize):
   c = getcontext()
   c.prec = 100
   d = Decimal(1)
-  vx={}
-  vxa={}
   for i in range(m, len(t)):
     h2 = expandHash(h, t[i], P1, P2)
-    #print(i,' ',t[i-m:i],' ',h,' ',h2)
     x = vxa.get(h2, 0)
-    vxa[h2] = x + 1
+    if h2 not in vxa.keys():
+    #print(i,' ',t[i-m:i],' ',h,' ',h2)
+      vxa[h2] = x + 1
     d = d * Decimal(x*2 + 1)
     x = vx.get(h, 0)
-    vx[h] = x + 1
+    if h not in vx.keys():
+      vx[h] = x + 1
     if m > 0:
       h = moveHashRight(h, t[i-m], t[i], P1, P2, P1m)
     d = d / Decimal(x*2 + int(Asize))
