@@ -42,11 +42,11 @@ def mean_absolute_error(y_true, y_pred):
 
 pred = Krichevsky.KrichevskyPredictor()
 res, alpha, asize = pred.load_data('data/eur_usd.txt')
-X, y = cross_val_split(res, 100)
+X, y = cross_val_split(res, 50)
 y_pred = []
 stt = time.time()
 for i, x in enumerate(X):
-    y_pred.append(pred.fit_predict(x, weights_type='l'))
+    y_pred.append(pred.fit_predict(x, weights_type='r', sort_weights=True))
 y = [pred.mapping[char] for char in y]
 print('TOTAL CALCULATION TIME: ', time.time()-stt, 'Dataset size: ', len(X))
 print("Accuracy on usd: ", accuracy_metrics(y, y_pred))

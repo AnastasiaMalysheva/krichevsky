@@ -3,6 +3,7 @@ import timeseries
 from decimal import *
 import copy
 import time
+import operator
 
 
 class KrichevskyPredictor(object):
@@ -30,7 +31,7 @@ class KrichevskyPredictor(object):
         self.P2 = predictor.getRandPrime(self.P1 * 1000000000)
         return res, alphabet, asize
 
-    def r_measure(self, seq, weights='r', max_step=20):
+    def r_measure(self, seq, weights='r', max_step=20, sort_weights=True):
         if weights == 'r':
             w = predictor.calculate_wi(len(seq) + 1)
         elif weights == 'l':
@@ -38,6 +39,7 @@ class KrichevskyPredictor(object):
         elif weights == 'e':
             w = predictor.calculate_exp_knn_weights(len(seq) + 1)
         res = Decimal(0)
+        curr_res = {}
         if len(seq) < max_step:
             max_step = len(seq)
         for i in range(1, max_step):
@@ -45,26 +47,32 @@ class KrichevskyPredictor(object):
                 self.vx[i] = {}
             if i not in self.vxa.keys():
                 self.vxa[i] = {}
-            curr_res, curr_vx, curr_vxa = predictor.calcKrichm(seq, i, self.P1, self.P2, self.asize, self.vx[i], self.vxa[i])
+            curr_res[i], curr_vx, curr_vxa = predictor.calcKrichm(seq, i, self.P1, self.P2, self.asize, self.vx[i], self.vxa[i])
             self.vx[i] = {**self.vx[i], **curr_vx}
             self.vxa[i] = {**self.vxa[i], **curr_vxa}
             if weights == 'r':
-                res += Decimal(w[i]) * curr_res
+                res += Decimal(w[i]) * curr_res[i]
             elif weights == 'l' or weights == 'e':
-                res += Decimal(w[i]) * curr_res
+                res += Decimal(w[i]) * curr_res[i]
+        if sort_weights:
+            cr_res = copy.deepcopy(curr_res)
+            coef_sorted = sorted(cr_res.items(), key=operator.itemgetter(1))
+            res = sum([coef_sorted[i-1][1]*Decimal(w[i]) for i in range(1, max_step)])
         return res
 
-    def fit_predict(self, seq, weights_type='r'):
+    def fit_predict(self, seq, weights_type='r', sort_weights=True):
         """Осуществляет предсказание. Для всех возможных последующих элементов ряда рассчитывает аналог R-меры
         с различными весами - классические веса R-меры, веса, линейно убывающие в зависимости от номера и веса, убывающие
-        экспоненциально."""
+        экспоненциально.
+        Если установлен флаг sort_weights, предикторы перед предсказанием пересортируются, затем первые max_step
+        взвешиваются и делается предсказание."""
         st = time.time()
         res_proba = {}
         max_proba = Decimal(0)
         for ch in self.alplabet:
             temp_seq = copy.deepcopy(seq)
             temp_seq.append(ch)
-            res_proba[ch] = self.r_measure(temp_seq, weights_type)
+            res_proba[ch] = self.r_measure(temp_seq, weights_type, sort_weights=sort_weights)
             if res_proba[ch] >= max_proba:
                 max_char = ch
                 max_proba = res_proba[ch]
